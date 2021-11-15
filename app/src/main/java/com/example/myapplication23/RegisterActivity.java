@@ -1,15 +1,14 @@
 package com.example.myapplication23;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.loader.content.CursorLoader;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -33,10 +32,9 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -47,6 +45,42 @@ public class RegisterActivity extends AppCompatActivity {
     private Button mBtnUpload;
     private ImageView imageView;
 
+
+    Uri imgUri;
+
+    ActivityResultLauncher<String> mGetContent = registerForActivityResult(new GetContent(),
+            new ActivityResultCallback<Uri>() {
+                @Override
+                public void onActivityResult(Uri uri) {
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    // RESULT_OK일 때 실행할 코드...
+
+                    StorageReference storageRef = storage.getReference();
+                    Glide.with(getApplication()).load(uri).override(200,200).into(imageView);
+//                        Uri file = Uri.fromFile(new File(getPath(data.getData())));
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+
+                    StorageReference riversRef = storageRef.child("images/"+ uri.getLastPathSegment());
+                    String filename =sdf.format(new Date())+ ".png";
+                    UploadTask uploadTask = riversRef.putFile(uri);
+                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle unsuccessful uploads
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                            // ...
+                        }
+                    });
+                }
+            });
+    
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,49 +88,11 @@ public class RegisterActivity extends AppCompatActivity {
         imageView = findViewById(R.id.main_image);
         mFirebaseAuth = FirebaseAuth.getInstance();
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("GodGong");
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        ActivityResultLauncher<Intent> launcher;
-//        private val takeImageResult = registerForActivityResult(ActivityResultContracts.GetContent()) { isSuccess ->
-//            if (isSuccess) {
-//                latestTmpUri?.let { uri ->
-//                        previewImage.setImageURI(uri)
-//                }
-//            }
-//        }
-//        launcher = registerForActivityResult(new ActivityResultContracts.TakePicture(),
-//                result -> {
-//                    if (result.getResultCode() == Activity.RESULT_OK) {
-//                        Uri imgUri = result.getData();
-//
-//                        // RESULT_OK일 때 실행할 코드...
-////                        Bitmap image = (Bitmap) data.getExtras().get("data");
-////                        ImageView imageview = (ImageView) findViewById(R.id.main_image);
-////                        imageview.setImageBitmap(image);
-////
-////                        imageView.setImageBitmap(bitmap);
-//                        StorageReference storageRef = storage.getReference();
-//                        Glide.with(this).load(imgUri).override(200,200).into(imageView);
-////                        Uri file = Uri.fromFile(new File(getPath(data.getData())));
-//
-//                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
-//
-//                        StorageReference riversRef = storageRef.child("images/"+ file.getLastPathSegment());
-//                        String filename =sdf.format(new Date())+ ".png";
-//                        UploadTask uploadTask = riversRef.putFile(imgUri)
-//                        uploadTask.addOnFailureListener(new OnFailureListener() {
-//                            @Override
-//                            public void onFailure(@NonNull Exception exception) {
-//                                // Handle unsuccessful uploads
-//                            }
-//                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//                            @Override
-//                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-//                                // ...
-//                            }
-//                        });
-//                    }
-//                });
+
+
+                
+
+   
 
         mEtEmail = findViewById(R.id.et_email);
         mEtPwd = findViewById(R.id.et_pwd);
@@ -127,20 +123,6 @@ public class RegisterActivity extends AppCompatActivity {
 
 
 
-// Create a reference to 'mountains.jpg'
-
-
-// Create a reference to 'images/mountains.jpg'
-
-
-//                            StorageReference profileImagesRef = storageRef.child("images/profile.jpg");
-                            //setValue : database에 insert (삽입) 행위
-
-
-
-
-
-
                             mDatabaseRef.child("UserAccount").child(firebaseUser.getUid()).setValue(account);
 //                            profileImagesRef.getName().equals(profileImagesRef.getName());
                             Toast.makeText(RegisterActivity.this, "회원가입에 성공하셨습니다.", Toast.LENGTH_SHORT).show();
@@ -154,15 +136,15 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         mBtnUpload = findViewById(R.id.getImage);
-//        mBtnUpload.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent intent = new Intent();
-//                intent.setType("image/*");
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-//                launcher.launch(intent);
-//            }
-//        });
+        mBtnUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                mGetContent.launch("image/*");
+            }
+        });
 
 
     }
@@ -181,5 +163,6 @@ public class RegisterActivity extends AppCompatActivity {
 
 
     }
+
 
     }
