@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication23">
 
-        <activity android:name=".LoginActivity"
+        <activity android:name=".StartActivity"
             android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -22,6 +22,7 @@
         <activity android:name=".RegisterActivity" />
         <activity android:name=".MainActivity"/>
         <activity android:name=".WritingActivity"/>
+        <activity android:name=".ChatActivity"/>
 
     </application>
 

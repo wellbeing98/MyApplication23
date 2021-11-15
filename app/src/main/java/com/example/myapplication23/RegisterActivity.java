@@ -4,10 +4,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.loader.content.CursorLoader;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,8 +20,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,6 +31,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -44,17 +56,47 @@ public class RegisterActivity extends AppCompatActivity {
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("GodGong");
         FirebaseStorage storage = FirebaseStorage.getInstance();
         ActivityResultLauncher<Intent> launcher;
-        launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK) {
-                        Intent data = result.getData();
-                        // RESULT_OK일 때 실행할 코드...
-
-                        Glide.with(getApplication()).load(data.getData()).override(200,200).into(imageView);
-
-
-                    }
-                });
+//        private val takeImageResult = registerForActivityResult(ActivityResultContracts.GetContent()) { isSuccess ->
+//            if (isSuccess) {
+//                latestTmpUri?.let { uri ->
+//                        previewImage.setImageURI(uri)
+//                }
+//            }
+//        }
+//        launcher = registerForActivityResult(new ActivityResultContracts.TakePicture(),
+//                result -> {
+//                    if (result.getResultCode() == Activity.RESULT_OK) {
+//                        Uri imgUri = result.getData();
+//
+//                        // RESULT_OK일 때 실행할 코드...
+////                        Bitmap image = (Bitmap) data.getExtras().get("data");
+////                        ImageView imageview = (ImageView) findViewById(R.id.main_image);
+////                        imageview.setImageBitmap(image);
+////
+////                        imageView.setImageBitmap(bitmap);
+//                        StorageReference storageRef = storage.getReference();
+//                        Glide.with(this).load(imgUri).override(200,200).into(imageView);
+////                        Uri file = Uri.fromFile(new File(getPath(data.getData())));
+//
+//                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+//
+//                        StorageReference riversRef = storageRef.child("images/"+ file.getLastPathSegment());
+//                        String filename =sdf.format(new Date())+ ".png";
+//                        UploadTask uploadTask = riversRef.putFile(imgUri)
+//                        uploadTask.addOnFailureListener(new OnFailureListener() {
+//                            @Override
+//                            public void onFailure(@NonNull Exception exception) {
+//                                // Handle unsuccessful uploads
+//                            }
+//                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                            @Override
+//                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+//                                // ...
+//                            }
+//                        });
+//                    }
+//                });
 
         mEtEmail = findViewById(R.id.et_email);
         mEtPwd = findViewById(R.id.et_pwd);
@@ -79,16 +121,28 @@ public class RegisterActivity extends AppCompatActivity {
                             account.setIdToken(firebaseUser.getUid());
                             account.setEmailId(firebaseUser.getEmail());
                             account.setPassword(strPwd);
-//                            account.setProfile(imageView);
-                            StorageReference storageRef = storage.getReference();
+//                           account.setProfile(imageView);
+
+
+
+
+
 // Create a reference to 'mountains.jpg'
 
 
 // Create a reference to 'images/mountains.jpg'
-                            StorageReference profileImagesRef = storageRef.child("images/profile.jpg");
+
+
+//                            StorageReference profileImagesRef = storageRef.child("images/profile.jpg");
                             //setValue : database에 insert (삽입) 행위
+
+
+
+
+
+
                             mDatabaseRef.child("UserAccount").child(firebaseUser.getUid()).setValue(account);
-                            profileImagesRef.getName().equals(profileImagesRef.getName());
+//                            profileImagesRef.getName().equals(profileImagesRef.getName());
                             Toast.makeText(RegisterActivity.this, "회원가입에 성공하셨습니다.", Toast.LENGTH_SHORT).show();
 
                         } else {
@@ -100,18 +154,32 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         mBtnUpload = findViewById(R.id.getImage);
-        mBtnUpload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                launcher.launch(intent);
-            }
-        });
+//        mBtnUpload.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent();
+//                intent.setType("image/*");
+//                intent.setAction(Intent.ACTION_GET_CONTENT);
+//                launcher.launch(intent);
+//            }
+//        });
 
 
     }
+    public String getPath(Uri uri){
 
+        String [] proj = {MediaStore.Images.Media.DATA};
+        CursorLoader cursorLoader = new CursorLoader(this,uri,proj,null,null,null);
+
+        Cursor cursor = cursorLoader.loadInBackground();
+        int index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+
+        cursor.moveToFirst();
+
+        return cursor.getString(index);
+
+
+
+    }
 
     }
