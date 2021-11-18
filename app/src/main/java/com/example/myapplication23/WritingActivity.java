@@ -1,7 +1,9 @@
 package com.example.myapplication23;
 
-import android.content.Intent;
+import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,17 +14,23 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
+import com.bumptech.glide.Registry;
+import com.bumptech.glide.annotation.GlideModule;
+import com.bumptech.glide.module.AppGlideModule;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Exclude;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class WritingActivity extends AppCompatActivity {
 
@@ -47,13 +55,33 @@ public class WritingActivity extends AppCompatActivity {
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("GodGong");
 
 
-
+        FirebaseAuth mAuth;
+// ...
+// Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
 // 컴포넌트 초기화
         mimage = findViewById(R.id.imageView2);
         title_et = findViewById(R.id.title_et);
         content_et = findViewById(R.id.content_et);
         reg_button = findViewById(R.id.reg_button);
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageReference = storage.getReference();
+        StorageReference pathReference = storageReference.child("images");
+        if(pathReference == null){
+            Toast.makeText(WritingActivity.this, "저장소에 사진이 없습니다.", Toast.LENGTH_SHORT).show();}
+        else{
+            Toast.makeText(WritingActivity.this, "저장소에 사진이 있습니다.", Toast.LENGTH_SHORT).show();
+            FirebaseUser firebaseUser = mFirebaseAuth.getCurrentUser();
+
+            StorageReference submitProfile = storageReference.child("images/"+firebaseUser.getUid());
+
+
+            Glide.with(this /* context */)
+                    .load(submitProfile)
+                    .into(mimage);
+        }
+        mimage.setImageResource(R.drawable.ic_launcher_background);
 
         reg_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -88,5 +116,6 @@ public class WritingActivity extends AppCompatActivity {
 
 
     }
+
 
 }
